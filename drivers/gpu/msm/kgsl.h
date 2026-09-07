@@ -219,6 +219,9 @@ struct kgsl_memdesc_ops {
  * @cur_bindings: Number of sparse pages actively bound
  */
 struct kgsl_memdesc {
+	struct hlist_node gpu_mem_node;
+	const void *gpu_mem_key;
+	u64 gpu_mem_size;
 	struct kgsl_pagetable *pagetable;
 	void *hostptr;
 	unsigned int hostptr_count;
@@ -276,6 +279,7 @@ struct kgsl_memdesc {
  * @bind_tree: RB Tree for sparse memory bindings
  */
 struct kgsl_mem_entry {
+	bool gpu_mem_accounted;
 	struct kref refcount;
 	struct kgsl_memdesc memdesc;
 	void *priv_data;

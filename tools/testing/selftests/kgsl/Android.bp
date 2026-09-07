@@ -1,0 +1,18 @@
+cc_test {
+    name: "polaris_gpu_mem_test",
+    srcs: ["gpu_mem_test.c"],
+    cflags: ["-Wall", "-Wextra", "-Werror", "-D__user="],
+    compile_multilib: "64",
+    gtest: false,
+    test_suites: ["device-tests"],
+}
+
+cc_test {
+    name: "polaris_gpu_render_test",
+    srcs: ["gpu_render_test.c"],
+    shared_libs: ["libEGL", "libGLESv2"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    compile_multilib: "64",
+    gtest: false,
+    test_suites: ["device-tests"],
+}

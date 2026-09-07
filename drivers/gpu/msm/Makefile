@@ -5,6 +5,7 @@ msm_kgsl_core-y = \
 	kgsl_drawobj.o \
 	kgsl_ioctl.o \
 	kgsl_sharedmem.o \
+	kgsl_gpumem.o \
 	kgsl_pwrctrl.o \
 	kgsl_pwrscale.o \
 	kgsl_mmu.o \

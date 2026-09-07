@@ -24,6 +24,7 @@
 
 #include "kgsl.h"
 #include "kgsl_sharedmem.h"
+#include "kgsl_gpumem.h"
 #include "kgsl_device.h"
 #include "kgsl_log.h"
 #include "kgsl_mmu.h"
@@ -979,6 +980,8 @@ done:
 		memset(memdesc, 0, sizeof(*memdesc));
 	}
 
+	if (!ret)
+		kgsl_gpumem_alloc(memdesc, memdesc);
 	return ret;
 }
 
@@ -987,6 +990,7 @@ void kgsl_sharedmem_free(struct kgsl_memdesc *memdesc)
 	if (memdesc == NULL || memdesc->size == 0)
 		return;
 
+	kgsl_gpumem_free(memdesc);
 	/* Make sure the memory object has been unmapped */
 	kgsl_mmu_put_gpuaddr(memdesc);
 
@@ -1213,6 +1217,7 @@ int kgsl_sharedmem_alloc_contig(struct kgsl_device *device,
 
 	KGSL_STATS_ADD(size, &kgsl_driver.stats.coherent,
 		&kgsl_driver.stats.coherent_max);
+	kgsl_gpumem_alloc(memdesc, memdesc);
 
 err:
 	if (result)
@@ -1330,6 +1335,7 @@ static int kgsl_cma_alloc_secure(struct kgsl_device *device,
 	/* Record statistics */
 	KGSL_STATS_ADD(aligned, &kgsl_driver.stats.secure,
 	       &kgsl_driver.stats.secure_max);
+	kgsl_gpumem_alloc(memdesc, memdesc);
 err:
 	if (result)
 		kgsl_sharedmem_free(memdesc);

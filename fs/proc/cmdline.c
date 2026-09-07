@@ -1,10 +1,20 @@
 #include <linux/fs.h>
 #include <linux/init.h>
+#include <linux/kernel.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <asm/setup.h>
 
 static char new_command_line[COMMAND_LINE_SIZE];
+
+/* Diagnostic boots need the real unlock state for Android's debug ramdisk. */
+static bool debug_cmdline;
+
+static int __init debug_cmdline_setup(char *arg)
+{
+	return kstrtobool(arg, &debug_cmdline);
+}
+early_param("exthm.debug_cmdline", debug_cmdline_setup);
 
 static int cmdline_proc_show(struct seq_file *m, void *v)
 {
@@ -55,7 +65,8 @@ static int __init proc_cmdline_init(void)
 	 * Patch various flags from command line seen by userspace in order to
 	 * pass SafetyNet checks.
 	 */
-	patch_safetynet_flags(new_command_line);
+	if (!debug_cmdline)
+		patch_safetynet_flags(new_command_line);
 
 	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
 	return 0;

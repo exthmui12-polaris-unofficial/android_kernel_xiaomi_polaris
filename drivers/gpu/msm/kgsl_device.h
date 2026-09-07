@@ -456,6 +456,8 @@ struct kgsl_context {
  * @ctxt_count_lock: Spinlock to protect ctxt_count
  */
 struct kgsl_process_private {
+	struct hlist_node gpu_mem_node;
+	u64 gpu_mem_total;
 	unsigned long priv;
 	struct pid *pid;
 	char comm[TASK_COMM_LEN];

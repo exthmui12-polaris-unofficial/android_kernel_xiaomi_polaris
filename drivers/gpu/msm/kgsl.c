@@ -38,6 +38,7 @@
 #include "kgsl_debugfs.h"
 #include "kgsl_log.h"
 #include "kgsl_sharedmem.h"
+#include "kgsl_gpumem.h"
 #include "kgsl_drawobj.h"
 #include "kgsl_device.h"
 #include "kgsl_trace.h"
@@ -374,10 +375,18 @@ static int kgsl_mem_entry_track_gpuaddr(struct kgsl_device *device,
 /* Commit the entry to the process so it can be accessed by other operations */
 static void kgsl_mem_entry_commit_process(struct kgsl_mem_entry *entry)
 {
+	const void *key;
+
 	if (!entry)
 		return;
 
+	key = &entry->memdesc;
+#ifdef CONFIG_DMA_SHARED_BUFFER
+	if (entry->memdesc.ops == &kgsl_dmabuf_ops)
+		key = ((struct kgsl_dma_buf_meta *)entry->priv_data)->dmabuf;
+#endif
 	spin_lock(&entry->priv->mem_lock);
+	kgsl_gpumem_commit(entry, key);
 	idr_replace(&entry->priv->mem_idr, entry, entry->id);
 	spin_unlock(&entry->priv->mem_lock);
 }
@@ -460,6 +469,7 @@ static void kgsl_mem_entry_detach_process(struct kgsl_mem_entry *entry)
 		idr_remove(&entry->priv->mem_idr, entry->id);
 	entry->id = 0;
 
+	kgsl_gpumem_uncommit(entry);
 	type = kgsl_memdesc_usermem_type(&entry->memdesc);
 	entry->priv->stats[type].cur -= entry->memdesc.size;
 
@@ -867,6 +877,7 @@ static void kgsl_destroy_process_private(struct kref *kref)
 	struct kgsl_process_private *private = container_of(kref,
 			struct kgsl_process_private, refcount);
 
+	kgsl_gpumem_process_remove(private);
 	put_pid(private->pid);
 	idr_destroy(&private->mem_idr);
 	idr_destroy(&private->syncsource_idr);
@@ -962,6 +973,8 @@ static struct kgsl_process_private *kgsl_process_private_new(
 		private = ERR_PTR(err);
 	}
 
+	if (!IS_ERR(private))
+		kgsl_gpumem_process_add(private);
 	return private;
 }
 
